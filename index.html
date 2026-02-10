@@ -2,45 +2,37 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>NEON ROCKET</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
 html,body{
- margin:0;
- overflow:hidden;
- background:black;
- font-family:'Orbitron',sans-serif;
- touch-action:none;
+  margin:0;overflow:hidden;
+  background:black;
+  font-family:'Orbitron',sans-serif
 }
 canvas{display:block}
 #ui{
- position:fixed; inset:0;
- display:flex; align-items:center; justify-content:center;
- pointer-events:none;
+  position:fixed;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none
 }
 .panel{
- background:rgba(5,8,25,.97);
- border:4px solid #00f6ff;
- box-shadow:0 0 60px #00f6ff;
- padding:40px 55px;
- text-align:center;
- pointer-events:auto;
+  background:rgba(5,8,25,.97);
+  border:4px solid #00f6ff;
+  box-shadow:0 0 60px #00f6ff;
+  padding:40px 55px;
+  text-align:center;
+  pointer-events:auto
 }
 h1{
- font-size:clamp(36px,8vw,56px);
- margin:0 0 10px;
- text-shadow:0 0 50px #00f6ff;
+  font-size:56px;margin:0 0 10px;
+  text-shadow:0 0 50px #00f6ff
 }
 button,select{
- margin-top:20px;
- padding:14px 32px;
- font-size:20px;
- font-family:'Orbitron',sans-serif;
- background:black;
- color:#00f6ff;
- border:3px solid #00f6ff;
- cursor:pointer;
+  margin-top:20px;padding:14px 32px;font-size:22px;
+  font-family:'Orbitron',sans-serif;
+  background:black;color:#00f6ff;
+  border:3px solid #00f6ff;cursor:pointer
 }
 button:hover{background:#00f6ff;color:black}
 </style>
@@ -50,27 +42,28 @@ button:hover{background:#00f6ff;color:black}
 <canvas id="c"></canvas>
 
 <div id="ui">
- <div class="panel" id="menu">
-  <h1>NEON ROCKET</h1>
-  <div style="font-size:22px;color:#00f6ff;text-shadow:0 0 25px #00f6ff">
-   High Score: <span id="hi">0</span>
+  <div class="panel" id="menu">
+    <h1>NEON ROCKET</h1>
+    <div style="font-size:24px;color:#00f6ff;text-shadow:0 0 25px #00f6ff">
+      High Score: <span id="hi">0</span>
+    </div>
+    <select id="diff">
+      <option value="easy">Easy</option>
+      <option value="normal" selected>Normal</option>
+      <option value="hard">Hard</option>
+    </select><br>
+    <button onclick="start()">START</button>
   </div>
-  <select id="diff">
-   <option value="easy">Easy</option>
-   <option value="normal" selected>Normal</option>
-   <option value="hard">Hard</option>
-  </select><br>
-  <button onclick="start()">START</button>
- </div>
 
- <div class="panel" id="over" style="display:none">
-  <h1>GAME OVER</h1>
-  <div style="font-size:28px">Score: <span id="fs"></span></div>
-  <div style="font-size:22px;color:#00f6ff;text-shadow:0 0 25px #00f6ff">
-   High Score: <span id="fh"></span>
+  <div class="panel" id="over" style="display:none">
+    <h1>GAME OVER</h1>
+    <div style="font-size:30px">Score: <span id="fs"></span></div>
+    <div style="font-size:24px;color:#00f6ff;text-shadow:0 0 25px #00f6ff">
+      High Score: <span id="fh"></span>
+    </div>
+    <div id="msg" style="font-size:22px;margin-top:10px;color:#ffe600;text-shadow:0 0 20px #ffe600"></div>
+    <button onclick="reset()">RESTART</button>
   </div>
-  <button onclick="reset()">RESTART</button>
- </div>
 </div>
 
 <script>
@@ -78,13 +71,10 @@ const c=document.getElementById("c"),ctx=c.getContext("2d");
 const menu=document.getElementById("menu"),over=document.getElementById("over");
 const diff=document.getElementById("diff");
 const hiSpan=document.getElementById("hi"),fs=document.getElementById("fs"),fh=document.getElementById("fh");
+const msgEl=document.getElementById("msg");
 
-function resize(){
- c.width=innerWidth;
- c.height=innerHeight;
-}
-addEventListener("resize",resize);
-resize();
+function resize(){c.width=innerWidth;c.height=innerHeight}
+addEventListener("resize",resize);resize();
 
 let hi=+localStorage.getItem("nr-hi")||0;
 hiSpan.textContent=hi;
@@ -92,20 +82,31 @@ hiSpan.textContent=hi;
 let state="menu",score=0,frame=0,shake=0,flash=0;
 const cam=()=>({x:(Math.random()-.5)*shake,y:(Math.random()-.5)*shake});
 
-const stars=[...Array(200)].map(()=>({x:Math.random()*c.width,y:Math.random()*c.height,z:Math.random()*3}));
+const stars=[...Array(220)].map(()=>({x:Math.random()*c.width,y:Math.random()*c.height,z:Math.random()*3}));
 
 const r={x:220,y:300,vy:0,a:0,trail:[],dead:false};
 
 let explosions=[],shockwave=null;
 let g,t,speed,gap;
 
+const messages=[
+ "Better luck next time 🚀",
+ "You got this 💪",
+ "So close! 🔥",
+ "Don’t give up 🌟",
+ "One more run 👀",
+ "That was clean 😤",
+ "You’re improving 👏",
+ "Next run is the one 😎"
+];
+
+// AUDIO
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
 
 function scoreSound(){
  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
- o.type="triangle";
- o.frequency.value=900;
- g.gain.value=.12;
+ o.type="triangle";o.frequency.value=880;
+ g.gain.value=.15;
  g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.15);
  o.connect(g);g.connect(audioCtx.destination);
  o.start();o.stop(audioCtx.currentTime+.15);
@@ -113,8 +114,7 @@ function scoreSound(){
 
 function explodeSound(){
  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
- o.type="sawtooth";
- o.frequency.value=120;
+ o.type="sawtooth";o.frequency.value=140;
  o.frequency.exponentialRampToValueAtTime(40,audioCtx.currentTime+.4);
  g.gain.value=.4;
  g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.5);
@@ -133,25 +133,14 @@ function addPipe(){
  pipes.push({x:c.width+160,top:Math.random()*(c.height-gap-260)+130,pass:false});
 }
 
-// 🟢 INPUT (DESKTOP + MOBILE)
-function thrust(){
- if(state==="play"){
-  audioCtx.resume();
-  r.vy=t;
- }
-}
-addEventListener("keydown",e=>e.code==="Space"&&thrust());
-addEventListener("mousedown",thrust);
-addEventListener("touchstart",e=>{
- e.preventDefault();
- thrust();
-},{passive:false});
+addEventListener("keydown",e=>e.code==="Space"&&jump());
+addEventListener("mousedown",jump);
+function jump(){if(state==="play"){audioCtx.resume();r.vy=t}}
 
 function start(){
  audioCtx.resume();
  setDiff(diff.value);
- state="play";
- score=0;frame=0;pipes=[];
+ state="play";score=0;frame=0;pipes=[];
  r.y=c.height/2;r.vy=0;r.trail=[];r.dead=false;
  explosions=[];shockwave=null;
  menu.style.display="none";
@@ -165,10 +154,8 @@ function reset(){
 
 function die(){
  if(state!=="play")return;
- state="dead";
- r.dead=true;
- shake=45;flash=1;
- explodeSound();
+ state="dead";r.dead=true;
+ shake=45;flash=1;explodeSound();
 
  shockwave={x:r.x,y:r.y,r:10,a:1};
 
@@ -190,6 +177,7 @@ function die(){
  setTimeout(()=>{
   fs.textContent=score;
   fh.textContent=hi;
+  msgEl.textContent=messages[Math.floor(Math.random()*messages.length)];
   over.style.display="block";
  },900);
 }
@@ -206,8 +194,7 @@ function drawSpace(){
 }
 
 function drawPipes(){
- ctx.shadowColor="#00f6ff";
- ctx.shadowBlur=20;
+ ctx.shadowColor="#00f6ff";ctx.shadowBlur=20;
  for(const p of pipes){
   ctx.fillStyle="#151a2e";
   ctx.fillRect(p.x,0,120,p.top);
@@ -228,18 +215,14 @@ function drawRocket(){
   b.x-=speed*1.2;
   ctx.strokeStyle=`rgba(255,230,0,${1-i/30})`;
   ctx.lineWidth=4;
-  ctx.beginPath();
-  ctx.moveTo(a.x,a.y);
-  ctx.lineTo(b.x,b.y);
-  ctx.stroke();
+  ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
  }
 
  ctx.save();
  ctx.translate(r.x,r.y);
  ctx.rotate(r.a);
  ctx.fillStyle="#ffe600";
- ctx.shadowColor="#ffe600";
- ctx.shadowBlur=45;
+ ctx.shadowColor="#ffe600";ctx.shadowBlur=45;
  ctx.beginPath();
  ctx.moveTo(-18,-10);
  ctx.lineTo(10,-18);
@@ -247,20 +230,15 @@ function drawRocket(){
  ctx.lineTo(10,18);
  ctx.lineTo(-18,10);
  ctx.lineTo(-6,0);
- ctx.closePath();
- ctx.fill();
+ ctx.closePath();ctx.fill();
  ctx.restore();
 }
 
 function drawExplosion(){
  for(const e of explosions){
   ctx.fillStyle="orange";
-  ctx.beginPath();
-  ctx.arc(e.x,e.y,6,0,Math.PI*2);
-  ctx.fill();
-  e.x+=e.vx;
-  e.y+=e.vy;
-  e.life--;
+  ctx.beginPath();ctx.arc(e.x,e.y,6,0,Math.PI*2);ctx.fill();
+  e.x+=e.vx;e.y+=e.vy;e.life--;
  }
  explosions=explosions.filter(e=>e.life>0);
 }
@@ -272,8 +250,7 @@ function drawShockwave(){
  ctx.beginPath();
  ctx.arc(shockwave.x,shockwave.y,shockwave.r,0,Math.PI*2);
  ctx.stroke();
- shockwave.r+=18;
- shockwave.a-=.04;
+ shockwave.r+=18;shockwave.a-=.04;
  if(shockwave.a<=0)shockwave=null;
 }
 
@@ -285,8 +262,7 @@ function loop(){
 
  if(state==="play"){
   frame++;
-  r.vy+=g;
-  r.y+=r.vy;
+  r.vy+=g;r.y+=r.vy;
   r.a+=(r.vy/10-r.a)*.12;
 
   if(frame%90===0)addPipe();
@@ -294,9 +270,7 @@ function loop(){
   for(const p of pipes){
    p.x-=speed;
    if(!p.pass&&p.x+120<r.x){
-    p.pass=true;
-    score++;
-    scoreSound();
+    p.pass=true;score++;scoreSound();
    }
    if(r.x+22>p.x&&r.x-22<p.x+120&&(r.y<p.top||r.y>p.top+gap))die();
   }
